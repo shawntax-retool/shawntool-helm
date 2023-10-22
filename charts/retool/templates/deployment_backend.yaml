@@ -39,7 +39,7 @@ spec:
       {{- with .Values.hostAliases }}
       hostAliases:
 {{ toYaml . | indent 8 }}
-      {{- end }} 
+      {{- end }}
 {{- if .Values.initContainers }}
       initContainers:
 {{- range $key, $value := .Values.initContainers }}
@@ -54,7 +54,7 @@ spec:
         args:
           - bash
           - -c
-          - chmod -R +x ./docker_scripts; sync; ./docker_scripts/wait-for-it.sh -t 0 {{ template "retool.postgresql.host" . }}:{{ template "retool.postgresql.port" . }}; ./docker_scripts/start_api.sh
+          - chmod -R +x ./docker_scripts; sync; ./docker_scripts/wait-for-it.sh -t 15 {{ template "retool.postgresql.host" . }}:{{ template "retool.postgresql.port" . }}; ./docker_scripts/start_api.sh
         {{- if .Values.commandline.args }}
 {{ toYaml .Values.commandline.args | indent 10 }}
         {{- end }}
@@ -82,43 +82,43 @@ spec:
             value: {{ template "retool.postgresql.user" . }}
           - name: POSTGRES_SSL_ENABLED
             value: {{ template "retool.postgresql.ssl_enabled" . }}
-          {{- if .Values.config.dbConnectorTimeout }}	
-          - name: DBCONNECTOR_QUERY_TIMEOUT_MS	
-            value: {{ .Values.config.dbConnectorTimeout | quote }}	
+          {{- if .Values.config.dbConnectorTimeout }}
+          - name: DBCONNECTOR_QUERY_TIMEOUT_MS
+            value: {{ .Values.config.dbConnectorTimeout | quote }}
           {{- end }}
           {{- if and (include "retool.workflows.enabled" .) (or (index .Values "retool-temporal-services-helm" "enabled") (.Values.workflows.temporal.enabled)) }}
-          - name: WORKFLOW_TEMPORAL_CLUSTER_FRONTEND_HOST	
-            value: {{ template "retool.temporal.host" . }}	
-          - name: WORKFLOW_TEMPORAL_CLUSTER_FRONTEND_PORT	
-            value: {{ template "retool.temporal.port" . }}	
-          - name: WORKFLOW_TEMPORAL_CLUSTER_NAMESPACE	
-            value: {{ template "retool.temporal.namespace" . }}	
-          {{- end }}	
+          - name: WORKFLOW_TEMPORAL_CLUSTER_FRONTEND_HOST
+            value: {{ template "retool.temporal.host" . }}
+          - name: WORKFLOW_TEMPORAL_CLUSTER_FRONTEND_PORT
+            value: {{ template "retool.temporal.port" . }}
+          - name: WORKFLOW_TEMPORAL_CLUSTER_NAMESPACE
+            value: {{ template "retool.temporal.namespace" . }}
+          {{- end }}
           {{- if include "retool.workflows.enabled" . }}
-          - name: WORKFLOW_BACKEND_HOST	
-            value: http://{{ template "retool.fullname" . }}-workflow-backend	
-          {{- end }}	
-          {{- if (.Values.workflows.temporal).sslEnabled }}	
-          - name: WORKFLOW_TEMPORAL_TLS_ENABLED	
-            value: "true"	
-          {{- if (and (.Values.workflows.temporal).sslCert (.Values.workflows.temporal).sslKey) }}	
-          - name: WORKFLOW_TEMPORAL_TLS_CRT	
-            value: {{ .Values.workflows.temporal.sslCert }}	
-          - name: WORKFLOW_TEMPORAL_TLS_KEY	
-            valueFrom:	
-              secretKeyRef:	
-              {{- if (.Values.workflows.temporal).sslKeySecretName }}	
-                name: {{ .Values.workflows.temporal.sslKeySecretName }}	
-                key: {{ .Values.workflows.temporal.sslKeySecretKey | default "temporal-tls-key" }}	
-              {{- else }}	
-                name: {{ template "retool.fullname" . }}	
-                key: "temporal-tls-key"	
-              {{- end }}	
-          {{- end }}	
-          {{- end }}	
-          {{- if .Values.codeExecutor.enabled }}	
-          - name: CODE_EXECUTOR_INGRESS_DOMAIN	
-            value: http://{{ template "retool.codeExecutor.name" . }}	
+          - name: WORKFLOW_BACKEND_HOST
+            value: http://{{ template "retool.fullname" . }}-workflow-backend
+          {{- end }}
+          {{- if (.Values.workflows.temporal).sslEnabled }}
+          - name: WORKFLOW_TEMPORAL_TLS_ENABLED
+            value: "true"
+          {{- if (and (.Values.workflows.temporal).sslCert (.Values.workflows.temporal).sslKey) }}
+          - name: WORKFLOW_TEMPORAL_TLS_CRT
+            value: {{ .Values.workflows.temporal.sslCert }}
+          - name: WORKFLOW_TEMPORAL_TLS_KEY
+            valueFrom:
+              secretKeyRef:
+              {{- if (.Values.workflows.temporal).sslKeySecretName }}
+                name: {{ .Values.workflows.temporal.sslKeySecretName }}
+                key: {{ .Values.workflows.temporal.sslKeySecretKey | default "temporal-tls-key" }}
+              {{- else }}
+                name: {{ template "retool.fullname" . }}
+                key: "temporal-tls-key"
+              {{- end }}
+          {{- end }}
+          {{- end }}
+          {{- if .Values.codeExecutor.enabled }}
+          - name: CODE_EXECUTOR_INGRESS_DOMAIN
+            value: http://{{ template "retool.codeExecutor.name" . }}
           {{- end }}
           {{- if and (not .Values.externalSecrets.enabled) (not .Values.externalSecrets.externalSecretsOperator.enabled) }}
           - name: LICENSE_KEY
@@ -201,9 +201,9 @@ spec:
         envFrom:
         - secretRef:
             name: {{ .Values.externalSecrets.name }}
-        {{- range .Values.externalSecrets.secrets }}	
-        - secretRef:	
-            name: {{ .name }}	
+        {{- range .Values.externalSecrets.secrets }}
+        - secretRef:
+            name: {{ .name }}
         {{- end }}
         {{- end }}
         {{- if .Values.externalSecrets.externalSecretsOperator.enabled  }}
