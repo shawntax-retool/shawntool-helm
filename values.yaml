@@ -1,46 +1,33 @@
 config:
-  licenseKey: d564eb9f-a52c-445b-90df-c2676e0111e4
-  # licenseKeySecretName is the name of the secret where the Retool license key is stored (can be used instead of licenseKey)
-  # licenseKeySecretName:
-  # licenseKeySecretKey is the key in the k8s secret, default: license-key
-  # licenseKeySecretKey:
+  # licenseKey: d564eb9f-a52c-445b-90df-c2676e0111e4
+  licenseKeySecretName: my-salsa
+  licenseKeySecretKey: license-key
   useInsecureCookies: true
   # Timeout for queries, in ms.
   # dbConnectorTimeout: 120000
   auth:
-    google:
-      clientId:
-      clientSecret:
-      # clientSecretSecretName is the name of the secret where the google client secret is stored (can be used instead of clientSecret)
+    # google:
+      # clientId:
+      # clientSecret:
       # clientSecretSecretName:
-      # clientSecretSecretKey is the key in the k8s secret, default: google-client-secret
       # clientSecretSecretKey:
       domain:
-  encryptionKey: LjU3mEWmZxpjGv4@Db8A
-  # encryptionKeySecretName is the name of the secret where the encryption key is stored (can be used instead of encryptionKey)
-  # encryptionKeySecretName:
-  # encryptionKeySecretKey is the key in the k8s secret, default: encryption-key
-  # encryptionKeySecretKey:
-  jwtSecret: LjU3mEWmZxpjGv4@Db8A
-  # jwtSecretSecretName is the name of the secret where the jwt secret is stored (can be used instead of jwtSecret)
-  # jwtSecretSecretName:
-  # jwtSecretSecretKey is the key in the k8s secret, default: jwt-secret
-  # jwtSecretSecretKey:
+  # encryptionKey: LjU3mEWmZxpjGv4@Db8A
+  encryptionKeySecretName: my-salsa
+  encryptionKeySecretKey: encryption-key
+  # jwtSecret: LjU3mEWmZxpjGv4@Db8A
+  jwtSecretSecretName: my-salsa
+  jwtSecretSecretKey: jwt-secret
 
-  # IMPORTANT: Incompatible with postgresql subchart
-  # Please disable the subchart in order to use a managed or external postgres instance.
   postgresql:
-    # Specify if postgresql subchart is disabled
-    host: localhost
+    host: host.docker.internal
     port: 5432
     db: example_db
     user: example_user
-    password: example_password
+    # password: example_password
     ssl_enabled: false
-    # passwordSecretName is the name of the secret where the pg password is stored (can be used instead of password)
-    # passwordSecretName: shawntool-retool
-    # passwordSecretKey is the key in the k8s secret, default: postgresql-password
-    # passwordSecretKey: postgresql-password
+    passwordSecretName: my-salsa
+    passwordSecretKey: pg-password
 
 image:
   repository: 'tryretool/backend'
@@ -51,7 +38,8 @@ image:
 commandline:
   args: []
 
-env: {}
+env:
+  # POSTGRES_PASSWORD: example_password
 
 dbconnector:
   java:
@@ -104,7 +92,7 @@ externalSecrets:
     # - name: retool-db
   # Support for External Secrets Operator: https://github.com/external-secrets/external-secrets
   externalSecretsOperator:
-    enabled: true
+    enabled: false
     # External Secrets Operator Backend Types: https://github.com/external-secrets/external-secrets#supported-backends
     # Default set to AWS Secrets Manager.
     backendType: secretsManager

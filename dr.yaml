@@ -1,0 +1,151 @@
+NAME: s
+LAST DEPLOYED: Thu Jan 18 14:46:49 2024
+NAMESPACE: default
+STATUS: pending-install
+REVISION: 1
+TEST SUITE: None
+HOOKS:
+MANIFEST:
+---
+# Source: retool/templates/serviceaccount.yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: s-retool
+---
+# Source: retool/templates/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    helm.sh/chart: retool-6.0.13
+    app.kubernetes.io/name: retool
+    app.kubernetes.io/instance: s
+    app.kubernetes.io/managed-by: Helm
+  name: s-retool
+spec:
+  type: NodePort
+  ports:
+    - port: 3000
+      targetPort: 3000
+      protocol: TCP
+
+  selector:
+    app.kubernetes.io/name: retool
+    app.kubernetes.io/instance: s
+---
+# Source: retool/templates/deployment_backend.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: s-retool
+  labels:
+    helm.sh/chart: retool-6.0.13
+    app.kubernetes.io/name: retool
+    app.kubernetes.io/instance: s
+    app.kubernetes.io/managed-by: Helm
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: retool
+      app.kubernetes.io/instance: s
+  revisionHistoryLimit: 3
+  template:
+    metadata:
+      annotations:
+      labels:
+        app.kubernetes.io/name: retool
+        app.kubernetes.io/instance: s
+    spec:
+      serviceAccountName: s-retool
+      containers:
+      - name: retool
+        image: "tryretool/backend:3.16.14"
+        imagePullPolicy: IfNotPresent
+        args:
+          - bash
+          - -c
+          - chmod -R +x ./docker_scripts; sync; ./docker_scripts/wait-for-it.sh -t 5 "host.docker.internal":"5432"; ./docker_scripts/start_api.sh
+        env:
+          - name: NODE_ENV
+            value: production
+          
+          - name: SERVICE_TYPE
+            value: MAIN_BACKEND,DB_CONNECTOR,DB_SSH_CONNECTOR,JOBS_RUNNER
+          
+          - name: CLIENT_ID
+            value: 
+          - name: COOKIE_INSECURE
+            value: "true"
+          - name: POSTGRES_HOST
+            value: "host.docker.internal"
+          - name: POSTGRES_PORT
+            value: "5432"
+          - name: POSTGRES_DB
+            value: "example_db"
+          - name: POSTGRES_USER
+            value: "example_user"
+          - name: POSTGRES_SSL_ENABLED
+            value: "false"
+          - name: LICENSE_KEY
+            valueFrom:
+              secretKeyRef:
+                name: my-salsa
+                key: license-key
+          - name: JWT_SECRET
+            valueFrom:
+              secretKeyRef:
+                name: my-salsa
+                key: jwt-secret
+          - name: ENCRYPTION_KEY
+            valueFrom:
+              secretKeyRef:
+                name: my-salsa
+                key: encryption-key
+          - name: POSTGRES_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: my-salsa
+                key: pg-password
+          # - name: CLIENT_SECRET
+          #   valueFrom:
+          #     secretKeyRef:
+          #
+          #       name: s-retool
+          #       key: google-client-secret
+          #
+        ports:
+        - containerPort: 3000
+          name: retool
+          protocol: TCP
+        resources:
+          limits:
+            cpu: 2000m
+            memory: 4000Mi
+          requests:
+            cpu: 1024m
+            memory: 2048Mi
+        volumeMounts:
+        
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: app.kubernetes.io/name
+                  operator: In
+                  values:
+                  - retool
+              topologyKey: kubernetes.io/hostname
+            weight: 100
+      tolerations:
+        []
+      volumes:
+
+NOTES:
+1. Get the application URL by running these commands:
+  export NODE_PORT=$(kubectl get --namespace default -o jsonpath="{.spec.ports[0].nodePort}" services s-retool)
+  export NODE_IP=$(kubectl get nodes --namespace default -o jsonpath="{.items[0].status.addresses[0].address}")
+  echo http://$NODE_IP:$NODE_PORT

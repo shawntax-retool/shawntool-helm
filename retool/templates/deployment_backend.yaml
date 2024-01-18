@@ -60,7 +60,7 @@ spec:
         args:
           - bash
           - -c
-          - chmod -R +x ./docker_scripts; sync; ./docker_scripts/wait-for-it.sh -t 0 {{ template "retool.postgresql.host" . }}:{{ template "retool.postgresql.port" . }}; ./docker_scripts/start_api.sh
+          - chmod -R +x ./docker_scripts; sync; ./docker_scripts/wait-for-it.sh -t 5 {{ template "retool.postgresql.host" . }}:{{ template "retool.postgresql.port" . }}; ./docker_scripts/start_api.sh
         {{- if .Values.commandline.args }}
 {{ toYaml .Values.commandline.args | indent 10 }}
         {{- end }}
@@ -188,16 +188,16 @@ spec:
                 key: postgresql-password
                 {{- end }}
           {{- end }}
-          - name: CLIENT_SECRET
-            valueFrom:
-              secretKeyRef:
-                {{- if .Values.config.auth.google.clientSecretSecretName }}
-                name: {{ .Values.config.auth.google.clientSecretSecretName }}
-                key: {{ .Values.config.auth.google.clientSecretSecretKey | default "google-client-secret" }}
-                {{- else }}
-                name: {{ template "retool.fullname" . }}
-                key: google-client-secret
-                {{- end }}
+          # - name: CLIENT_SECRET
+          #   valueFrom:
+          #     secretKeyRef:
+          #       {{- if .Values.config.auth.google.clientSecretSecretName }}
+          #       name: {{ .Values.config.auth.google.clientSecretSecretName }}
+          #       key: {{ .Values.config.auth.google.clientSecretSecretKey | default "google-client-secret" }}
+          #       {{- else }}
+          #       name: {{ template "retool.fullname" . }}
+          #       key: google-client-secret
+          #       {{- end }}
           {{- end }}
           {{- range $key, $value := .Values.env }}
           - name: "{{ $key }}"

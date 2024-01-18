@@ -1,6 +1,5 @@
 charts/**/*.tgz
 .prettierignore
-
 kubeconform
-
+my-salsa.yaml
 .DS_Store
