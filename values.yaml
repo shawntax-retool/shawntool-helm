@@ -30,27 +30,33 @@ config:
   # IMPORTANT: Incompatible with postgresql subchart
   # Please disable the subchart in order to use a managed or external postgres instance.
   postgresql:
-    host: ep-black-sun-855970.us-west-2.aws.neon.tech
+    # Specify if postgresql subchart is disabled
+    host: localhost
     port: 5432
-    db: shelm
-    user: shawntax-retool
-    password: 0PQaNF4gersp
-    ssl_enabled: true
+    db: example_db
+    user: example_user
+    password: example_password
+    ssl_enabled: false
     # passwordSecretName is the name of the secret where the pg password is stored (can be used instead of password)
-    # passwordSecretName:
+    # passwordSecretName: shawntool-retool
     # passwordSecretKey is the key in the k8s secret, default: postgresql-password
     # passwordSecretKey: postgresql-password
 
 image:
   repository: 'tryretool/backend'
   # You need to pick a specific tag here, this chart will not make a decision for you
-  tag: '3.12.3'
+  tag: '3.16.14'
   pullPolicy: 'IfNotPresent'
 
 commandline:
   args: []
 
 env: {}
+
+dbconnector:
+  java:
+    enabled: false
+
 
 # Optionally specify additional environment variables to be populated from Kubernetes secrets.
 # Useful for passing in SCIM_AUTH_TOKEN or other secret environment variables from Kubernetes secrets.
@@ -98,7 +104,7 @@ externalSecrets:
     # - name: retool-db
   # Support for External Secrets Operator: https://github.com/external-secrets/external-secrets
   externalSecretsOperator:
-    enabled: false
+    enabled: true
     # External Secrets Operator Backend Types: https://github.com/external-secrets/external-secrets#supported-backends
     # Default set to AWS Secrets Manager.
     backendType: secretsManager
@@ -116,20 +122,13 @@ deployment:
   annotations: {}
 
 service:
-  type: ClusterIP
-  externalPort: 3000
-  internalPort: 3000
-  # externalIPs:
-  # - 192.168.0.1
-  #
-  ## LoadBalancer IP if service.type is LoadBalancer
-  # loadBalancerIP: 10.2.2.2
+  type: NodePort
+  selector: {}
   annotations: {}
   labels: {}
-  ## Limit load balancer source ips to list of CIDRs (where available)
-  # loadBalancerSourceRanges: []
-  selector: {}
-  # portName: service-port
+  ports:
+    - port: 3000
+    - nodePort: 30007
 
 ingress:
   enabled: false
@@ -155,6 +154,8 @@ postgresql:
   # for your production instance of Retool; it is a default. Please use a managed Postgres,
   # or self-host more permanantly. Use enabled: false and set in config above to do so.
   enabled: false
+  diagnosticMode:
+    enabled: true
   ssl_enabled: false
   auth:
     # existingSecret: postgresql-password
@@ -172,11 +173,11 @@ postgresql:
     tag: '13'
   postgresqlDataDir: '/data/pgdata'
   primary:
-    # volumePermissions:
-    #   enabled: true
+    volumePermissions:
+      enabled: true
     persistence:
       enabled: true
-      mountPath: '/data/'
+      mountPath: '/data/pgdata'
 
 serviceAccount:
   # Specifies whether a service account should be created
@@ -206,7 +207,7 @@ readinessProbe:
 startupProbe:
   enabled: false
   path: /api/checkHealth
-  initialDelaySeconds: 60
+  initialDelaySeconds: 80
   timeoutSeconds: 10
   periodSeconds: 10
   successThreshold: 1
@@ -256,7 +257,7 @@ nodeSelector: {}
 
 # Common annotations for all pods (backend and job runner).
 podAnnotations:
-  rollme: '{{ randAlphaNum 5 | quote }}'
+  # rollme: '{{ randAlphaNum 5 | quote }}'
 
 # Increasing replica count will deploy a separate pod for backend and jobs
 # Example: with 3 replicas, you will end up with 3 backends + 1 jobs pod

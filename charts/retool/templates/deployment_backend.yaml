@@ -23,6 +23,9 @@ spec:
 {{- if .Values.backend.annotations }}
 {{ toYaml .Values.backend.annotations | indent 8 }}
 {{- end }}
+{{- if .Values.ui.annotations }}
+{{ toYaml .Values.ui.annotations | indent 8 }}
+{{- end }}
       labels:
 {{- include "retool.selectorLabels" . | nindent 8 }}
 {{- if .Values.podLabels }}
@@ -30,6 +33,9 @@ spec:
 {{- end }}
 {{- if .Values.backend.labels }}
 {{ toYaml .Values.backend.labels | indent 8 }}
+{{- end }}
+{{- if .Values.ui.labels }}
+{{ toYaml .Values.ui.labels | indent 8 }}
 {{- end }}
     spec:
       serviceAccountName: {{ template "retool.serviceAccountName" . }}
@@ -54,19 +60,29 @@ spec:
         args:
           - bash
           - -c
-          - chmod -R +x ./docker_scripts; sync; ./docker_scripts/wait-for-it.sh -t 15 {{ template "retool.postgresql.host" . }}:{{ template "retool.postgresql.port" . }}; ./docker_scripts/start_api.sh
+          - chmod -R +x ./docker_scripts; sync; ./docker_scripts/wait-for-it.sh -t 0 {{ template "retool.postgresql.host" . }}:{{ template "retool.postgresql.port" . }}; ./docker_scripts/start_api.sh
         {{- if .Values.commandline.args }}
 {{ toYaml .Values.commandline.args | indent 10 }}
         {{- end }}
         env:
           - name: NODE_ENV
             value: production
-          {{- if gt (int (toString (.Values.replicaCount))) 1 }}
+          {{- if include "retool.jobRunner.enabled" . }}
+          {{ if "$.Values.dbconnector.java.enabled" }}
+          - name: SERVICE_TYPE
+            value: MAIN_BACKEND,DB_CONNECTOR,DB_SSH_CONNECTOR,JAVA_DBCONNECTOR
+          {{ else }}
           - name: SERVICE_TYPE
             value: MAIN_BACKEND,DB_CONNECTOR,DB_SSH_CONNECTOR
+          {{ end }}
           {{- else }}
+          {{ if "$.Values.dbconnector.java.enabled" }}
+          - name: SERVICE_TYPE
+            value: MAIN_BACKEND,DB_CONNECTOR,DB_SSH_CONNECTOR,JAVA_DBCONNECTOR,JOBS_RUNNER
+          {{ else }}
           - name: SERVICE_TYPE
             value: MAIN_BACKEND,DB_CONNECTOR,DB_SSH_CONNECTOR,JOBS_RUNNER
+          {{ end }}
           {{- end }}
           - name: CLIENT_ID
             value: {{ default "" .Values.config.auth.google.clientId }}
